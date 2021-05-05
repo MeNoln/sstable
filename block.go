@@ -26,7 +26,29 @@ type BlockRow struct {
 	value []byte
 }
 
-func ReadBlock(rs io.ReadSeeker, blockPos int64) (BlockRow, error) {
+func (br *BlockRow) marshalBlock() ([]byte, error) {
+	buf := bytes.NewBuffer([]byte{})
+
+	if err := binary.Write(buf, binary.BigEndian, uint32(len(br.key))); err != nil {
+		return nil, err
+	}
+
+	if err := binary.Write(buf, binary.BigEndian, uint32(len(br.value))); err != nil {
+		return nil, err
+	}
+
+	if _, err := buf.Write(br.key); err != nil {
+		return nil, err
+	}
+
+	if _, err := buf.Write(br.value); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func readBlock(rs io.ReadSeeker, blockPos int64) (BlockRow, error) {
 	br := BlockRow{}
 
 	_, err := rs.Seek(blockPos, 0)
@@ -59,26 +81,4 @@ func ReadBlock(rs io.ReadSeeker, blockPos int64) (BlockRow, error) {
 	copy(br.value, data[kl:])
 
 	return br, nil
-}
-
-func (br *BlockRow) MarshalBlock() ([]byte, error) {
-	buf := bytes.NewBuffer([]byte{})
-
-	if err := binary.Write(buf, binary.BigEndian, uint32(len(br.key))); err != nil {
-		return nil, err
-	}
-
-	if err := binary.Write(buf, binary.BigEndian, uint32(len(br.value))); err != nil {
-		return nil, err
-	}
-
-	if _, err := buf.Write(br.key); err != nil {
-		return nil, err
-	}
-
-	if _, err := buf.Write(br.value); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
 }

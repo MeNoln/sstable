@@ -13,30 +13,6 @@ func NewIndex() Index {
 	return []IndexRow{}
 }
 
-func ReadIndex(r io.Reader, size int) (Index, error) {
-	index := make([]byte, size)
-	if _, err := r.Read(index); err != nil {
-		return nil, err
-	}
-
-	var (
-		read = 0
-		rows []IndexRow
-	)
-
-	for read < len(index) {
-		ir, br, err := UnmarshalIndexRow(index[read:])
-		if err != nil {
-			return nil, err
-		}
-
-		read += br
-		rows = append(rows, ir)
-	}
-
-	return rows, nil
-}
-
 func (i Index) AppendRow(key []byte, pos uint32) Index {
 	row := IndexRow{
 		key:      key,
@@ -83,4 +59,28 @@ func UnmarshalIndexRow(data []byte) (IndexRow, int, error) {
 	copy(ir.key, data[8:8+kl])
 
 	return ir, int(8 + kl), nil
+}
+
+func readIndex(r io.Reader, size int) (Index, error) {
+	index := make([]byte, size)
+	if _, err := r.Read(index); err != nil {
+		return nil, err
+	}
+
+	var (
+		read = 0
+		rows []IndexRow
+	)
+
+	for read < len(index) {
+		ir, br, err := UnmarshalIndexRow(index[read:])
+		if err != nil {
+			return nil, err
+		}
+
+		read += br
+		rows = append(rows, ir)
+	}
+
+	return rows, nil
 }

@@ -10,31 +10,15 @@ import (
 const headerLen int = 8
 
 type Header struct {
-	FileLen     uint32 // len = 4
-	IndexOffset uint32 // len = 4
+	fileLen     uint32
+	indexOffset uint32
 }
 
 func NewHeader(fl, io uint32) Header {
 	return Header{
-		FileLen:     fl,
-		IndexOffset: io,
+		fileLen:     fl,
+		indexOffset: io,
 	}
-}
-
-func ReadHeader(r io.Reader) (Header, error) {
-	h := Header{}
-
-	bhead := make([]byte, headerLen)
-	if _, err := r.Read(bhead); err != nil {
-		return h, err
-	}
-
-	h, err := UnmarshalHeader(bhead)
-	if err != nil {
-		return h, err
-	}
-
-	return h, nil
 }
 
 func (h *Header) MarshalBinary() ([]byte, error) {
@@ -54,11 +38,27 @@ func UnmarshalHeader(data []byte) (Header, error) {
 		return h, fmt.Errorf("header data is less then required")
 	}
 
-	toff := binary.BigEndian.Uint32(data[:4])
+	flen := binary.BigEndian.Uint32(data[:4])
 	ioff := binary.BigEndian.Uint32(data[4:8])
 
-	h.FileLen = toff
-	h.IndexOffset = ioff
+	h.fileLen = flen
+	h.indexOffset = ioff
+
+	return h, nil
+}
+
+func readHeader(r io.Reader) (Header, error) {
+	h := Header{}
+
+	bhead := make([]byte, headerLen)
+	if _, err := r.Read(bhead); err != nil {
+		return h, err
+	}
+
+	h, err := UnmarshalHeader(bhead)
+	if err != nil {
+		return h, err
+	}
 
 	return h, nil
 }

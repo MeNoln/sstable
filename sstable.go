@@ -40,7 +40,7 @@ func WriteTable(b Blocks, w io.Writer) error {
 	index := NewIndex()
 
 	for _, block := range b {
-		b, err := block.MarshalBlock()
+		b, err := block.marshalBlock()
 		if err != nil {
 			return err
 		}
@@ -96,16 +96,16 @@ func NewTable(rws io.ReadWriteSeeker) (*SSTable, error) {
 		return nil, err
 	}
 
-	header, err := ReadHeader(rws)
+	header, err := readHeader(rws)
 	if err != nil {
 		return nil, err
 	}
 
-	if _, err := rws.Seek(int64(header.IndexOffset), 0); err != nil {
+	if _, err := rws.Seek(int64(header.indexOffset), 0); err != nil {
 		return nil, err
 	}
 
-	index, err := ReadIndex(rws, int(header.FileLen-header.IndexOffset))
+	index, err := readIndex(rws, int(header.fileLen-header.indexOffset))
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (sst *SSTable) Search(key string) (string, error) {
 		return "", ErrKeyNotFound
 	}
 
-	block, err := ReadBlock(sst.rws, int64(pos))
+	block, err := readBlock(sst.rws, int64(pos))
 	if err != nil {
 		return "", err
 	}
